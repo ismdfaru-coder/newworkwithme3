@@ -920,15 +920,93 @@ export default function DashboardPage() {
 
               <div className="flex items-center justify-between pt-2">
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  {/* Plus menu with dropdown */}
+                  <div className="relative" ref={plusMenuRef}>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+                      onClick={() => setPlusMenuOpen(!plusMenuOpen)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    
+                    {/* Dropdown Menu */}
+                    {plusMenuOpen && (
+                      <div className="absolute bottom-full left-0 mb-2 w-48 rounded-lg border border-border bg-card shadow-lg py-1 z-50">
+                        <button 
+                          className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                          onClick={() => {
+                            setPlusMenuOpen(false)
+                          }}
+                        >
+                          <ImageIcon className="h-4 w-4" />
+                          <span>Add photos</span>
+                        </button>
+                        <button 
+                          className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                          onClick={() => {
+                            setSearchMode("web")
+                            setPlusMenuOpen(false)
+                            textareaRef.current?.focus()
+                          }}
+                        >
+                          <Globe className="h-4 w-4" />
+                          <span>Web search</span>
+                          {searchMode === "web" && <Check className="h-3 w-3 ml-auto text-primary" />}
+                        </button>
+                        <button 
+                          className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                          onClick={() => {
+                            setPlusMenuOpen(false)
+                          }}
+                        >
+                          <BookOpen className="h-4 w-4" />
+                          <span>Study and learn</span>
+                        </button>
+                        
+                        <div className="border-t border-border my-1" />
+                        
+                        <button 
+                          className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                          onClick={() => {
+                            setSearchMode("deep")
+                            setPlusMenuOpen(false)
+                            textareaRef.current?.focus()
+                          }}
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          <span>Deep research</span>
+                          {searchMode === "deep" && <Check className="h-3 w-3 ml-auto text-primary" />}
+                        </button>
+                        <button 
+                          className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                          onClick={() => {
+                            setSearchMode("think")
+                            setPlusMenuOpen(false)
+                            textareaRef.current?.focus()
+                          }}
+                        >
+                          <Lightbulb className="h-4 w-4" />
+                          <span>Think longer</span>
+                          {searchMode === "think" && <Check className="h-3 w-3 ml-auto text-primary" />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Show active mode indicator */}
+                  {searchMode !== "none" && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-medium">
+                      <X className="h-3 w-3 cursor-pointer hover:bg-primary/20 rounded-full" onClick={() => setSearchMode("none")} />
+                      {searchMode === "web" && <><Globe className="h-3 w-3" /><span>Web search</span></>}
+                      {searchMode === "deep" && <><Sparkles className="h-3 w-3" /><span>Deep research</span></>}
+                      {searchMode === "think" && <><Lightbulb className="h-3 w-3" /><span>Think longer</span></>}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
-                    <Smile className="h-4 w-4" />
-                  </Button>
                   <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
                     <Mic className="h-4 w-4" />
                   </Button>
@@ -1150,13 +1228,11 @@ export default function DashboardPage() {
               
               {/* Show active mode indicator */}
               {searchMode !== "none" && (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs">
-                  {searchMode === "web" && <><Globe className="h-3 w-3" /><span>Web</span></>}
-                  {searchMode === "deep" && <><Sparkles className="h-3 w-3" /><span>Deep</span></>}
-                  {searchMode === "think" && <><Lightbulb className="h-3 w-3" /><span>Think</span></>}
-                  <button onClick={() => setSearchMode("none")} className="ml-1 hover:bg-primary/20 rounded-full p-0.5">
-                    <X className="h-3 w-3" />
-                  </button>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-medium">
+                  <X className="h-3 w-3 cursor-pointer hover:bg-primary/20 rounded-full" onClick={() => setSearchMode("none")} />
+                  {searchMode === "web" && <><Globe className="h-3 w-3" /><span>Web search</span></>}
+                  {searchMode === "deep" && <><Sparkles className="h-3 w-3" /><span>Deep research</span></>}
+                  {searchMode === "think" && <><Lightbulb className="h-3 w-3" /><span>Think longer</span></>}
                 </div>
               )}
               
