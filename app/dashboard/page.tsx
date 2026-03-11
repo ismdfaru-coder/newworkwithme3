@@ -744,7 +744,39 @@ export default function DashboardPage() {
                         </Button>
                       </div>
                       
-{/* Sources hidden from chat panel - users can access via other means if needed */}
+{/* Source favicon links - without "Sources" label */}
+                      {message.sources && message.sources.length > 0 && (
+                        <div className="inline-flex items-center gap-1 ml-2">
+                          {message.sources.slice(0, 6).map((source, idx) => (
+                            <a 
+                              key={idx}
+                              href={source.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title={source.title}
+                              className="h-6 w-6 rounded-full bg-background border border-border flex items-center justify-center overflow-hidden hover:border-foreground/40 transition-colors"
+                            >
+                              <img 
+                                src={source.favicon} 
+                                alt="" 
+                                className="h-4 w-4"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none'
+                                  const parent = (e.target as HTMLImageElement).parentElement
+                                  if (parent) {
+                                    parent.innerHTML = `<span class="text-[10px] font-bold text-muted-foreground">${source.title.charAt(0).toUpperCase()}</span>`
+                                  }
+                                }}
+                              />
+                            </a>
+                          ))}
+                          {message.sources.length > 6 && (
+                            <div className="h-6 w-6 rounded-full bg-muted border border-border flex items-center justify-center">
+                              <span className="text-[10px] font-medium text-muted-foreground">+{message.sources.length - 6}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   )}
 
