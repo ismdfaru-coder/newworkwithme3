@@ -149,7 +149,7 @@ export default function DashboardPage() {
                 {
                   id: crypto.randomUUID(),
                   type: "searching",
-                  description: "Connecting to Manus AI...",
+                  description: "Thinking and searching the web...",
                   timestamp: new Date(),
                 }
               ]
@@ -206,11 +206,11 @@ export default function DashboardPage() {
 
       // Step 2: Poll for task result using GET endpoint
       const pollForResult = async (): Promise<ManusResponse> => {
-        const maxAttempts = 60 // 3 minutes max (60 * 3 seconds)
+        const maxAttempts = 180 // 3 minutes max (180 * 1 second)
         let attempts = 0
 
         while (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 3000)) // Wait 3 seconds
+          await new Promise(resolve => setTimeout(resolve, 1000)) // Poll every 1 second for faster response
           
           console.log("[v0] Polling GET /api/manus?taskId=" + taskId)
           const statusResponse = await fetch(`/api/manus?taskId=${taskId}`)
