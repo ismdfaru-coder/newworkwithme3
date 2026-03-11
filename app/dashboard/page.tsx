@@ -5,10 +5,7 @@ import { Button } from "@/components/ui/button"
 import { 
   Plus, 
   ArrowUp, 
-  Presentation, 
   Globe, 
-  Smartphone, 
-  Paintbrush,
   Smile,
   Mic,
   X,
@@ -94,12 +91,7 @@ export default function DashboardPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const quickActions = [
-    { icon: Presentation, label: "Create slides" },
-    { icon: Globe, label: "Build website" },
-    { icon: Smartphone, label: "Develop apps" },
-    { icon: Paintbrush, label: "Design" },
-  ]
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -589,11 +581,6 @@ export default function DashboardPage() {
     }
   }
 
-  const handleQuickAction = (action: string) => {
-    setInputValue(action)
-    textareaRef.current?.focus()
-  }
-
   const getStepIcon = (type: TaskStep["type"], isLast: boolean) => {
     if (!isLast || type === "complete") {
       switch (type) {
@@ -1025,7 +1012,7 @@ export default function DashboardPage() {
           <div className="mt-2 flex items-center justify-between rounded-lg border border-border bg-card px-4 py-2">
             <div className="flex items-center gap-2">
               <ConnectIcon />
-              <span className="text-sm text-muted-foreground">Powered by Manus AI</span>
+              <span className="text-sm text-muted-foreground">Connected tools</span>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
@@ -1043,27 +1030,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          {quickActions.map((action) => (
-            <Button
-              key={action.label}
-              variant="outline"
-              className="gap-2 rounded-full border-border bg-background hover:bg-muted"
-              onClick={() => handleQuickAction(`Help me ${action.label.toLowerCase()}`)}
-            >
-              <action.icon className="h-4 w-4" />
-              {action.label}
-            </Button>
-          ))}
-          <Button 
-            variant="outline" 
-            className="rounded-full border-border bg-background hover:bg-muted"
-            onClick={() => handleQuickAction("What can you help me with?")}
-          >
-            More
-          </Button>
-        </div>
+
       </div>
     </div>
   )
