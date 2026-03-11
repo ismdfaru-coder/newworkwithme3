@@ -104,6 +104,9 @@ export default function DashboardPage() {
   const handleSubmit = async () => {
     if (!inputValue.trim() || isLoading) return
 
+    // Check if this is a new chat (no existing messages) - use Keyplex
+    const isNewChat = messages.length === 0
+
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
@@ -132,6 +135,69 @@ export default function DashboardPage() {
     setIsLoading(true)
 
     try {
+      // For new chat, use Keyplex (faster, synchronous)
+      if (isNewChat) {
+        setMessages(prev => prev.map(m => 
+          m.id === assistantMessage.id 
+            ? { 
+                ...m, 
+                status: "processing",
+                steps: [
+                  ...(m.steps || []),
+                  {
+                    id: crypto.randomUUID(),
+                    type: "searching",
+                    description: "Thinking...",
+                    timestamp: new Date(),
+                  }
+                ]
+              }
+            : m
+        ))
+
+        const response = await fetch("/api/keyplex", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            prompt: userMessage.content,
+            model: "openai/gpt-4o-mini"
+          }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to get response from Keyplex")
+        }
+
+        const content = data.output || ""
+
+        setMessages(prev => prev.map(m => 
+          m.id === assistantMessage.id 
+            ? { 
+                ...m, 
+                content,
+                status: "complete",
+                steps: [
+                  ...(m.steps || []),
+                  {
+                    id: crypto.randomUUID(),
+                    type: "complete",
+                    description: "Response ready",
+                    timestamp: new Date(),
+                  }
+                ]
+              }
+            : m
+        ))
+        
+        setIsLoading(false)
+        return
+      }
+
+      // For existing chats, continue using Manus (with web search capabilities)
       // Update to processing status
       setMessages(prev => prev.map(m => 
         m.id === assistantMessage.id 
