@@ -89,8 +89,6 @@ export default function DashboardPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [sourcePanelOpen, setSourcePanelOpen] = useState(false)
-  const [activeSources, setActiveSources] = useState<Source[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -473,7 +471,7 @@ export default function DashboardPage() {
               resolvedUrls: Array<{ original: string; resolved: string }> 
             }
             
-            // Update sources with resolved URLs
+            // Update sources with resolved URLs and filter out any remaining vertex/google redirect URLs
             sources = parsedSources.map(source => {
               const resolved = resolvedUrls.find(r => r.original === source.url)
               if (resolved && resolved.resolved !== source.url) {
@@ -491,8 +489,14 @@ export default function DashboardPage() {
                 }
               }
               return source
+            }).filter(source => {
+              // Filter out any URLs that still contain vertex.ai or google redirect patterns
+              const url = source.url.toLowerCase()
+              return !url.includes('vertexaisearch.cloud.google.com') && 
+                     !url.includes('vertex.ai') &&
+                     !url.includes('google.com/url')
             })
-            console.log("[v0] Resolved sources URLs:", sources.map(s => s.url))
+            console.log("[v0] Resolved and filtered sources URLs:", sources.map(s => s.url))
           }
         } catch (error) {
           console.error("[v0] Error resolving URLs:", error)
@@ -740,44 +744,7 @@ export default function DashboardPage() {
                         </Button>
                       </div>
                       
-                      {/* Sources button - opens sources panel */}
-                      {message.sources && message.sources.length > 0 && (
-                        <button
-                          onClick={() => {
-                            setActiveSources(message.sources || [])
-                            setSourcePanelOpen(true)
-                          }}
-                          className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                        >
-                          <div className="flex items-center -space-x-1.5">
-                            {message.sources.slice(0, 4).map((source, idx) => (
-                              <div 
-                                key={idx}
-                                className="h-5 w-5 rounded-full bg-background border border-border flex items-center justify-center overflow-hidden"
-                              >
-                                <img 
-                                  src={source.favicon} 
-                                  alt="" 
-                                  className="h-3 w-3"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none'
-                                    const parent = (e.target as HTMLImageElement).parentElement
-                                    if (parent) {
-                                      parent.innerHTML = `<span class="text-[8px] font-bold text-muted-foreground">${source.title.charAt(0).toUpperCase()}</span>`
-                                    }
-                                  }}
-                                />
-                              </div>
-                            ))}
-                            {message.sources.length > 4 && (
-                              <div className="h-5 w-5 rounded-full bg-muted border border-border flex items-center justify-center">
-                                <span className="text-[8px] font-medium text-muted-foreground">+{message.sources.length - 4}</span>
-                              </div>
-                            )}
-                          </div>
-                          <span className="font-medium">Sources</span>
-                        </button>
-                      )}
+{/* Sources hidden from chat panel - users can access via other means if needed */}
                     </div>
                   )}
 
@@ -861,93 +828,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Sources Slide-out Panel */}
-      <div 
-        className={cn(
-          "fixed top-0 right-0 h-full w-96 bg-background border-l border-border shadow-xl transform transition-transform duration-300 ease-in-out z-50",
-          sourcePanelOpen ? "translate-x-0" : "translate-x-full"
-        )}
-      >
-        <div className="flex flex-col h-full">
-          {/* Panel Header */}
-          <div className="flex items-center justify-between p-4 border-b border-border">
-            <h2 className="text-lg font-semibold">Sources</h2>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8"
-              onClick={() => setSourcePanelOpen(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Sources List */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {activeSources.map((source, index) => (
-              <a
-                key={`${source.url}-${index}`}
-                href={source.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block p-3 rounded-lg border border-border hover:border-foreground/20 hover:bg-muted/50 transition-colors group"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                    <img 
-                      src={source.favicon} 
-                      alt="" 
-                      className="h-5 w-5"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none'
-                        const parent = (e.target as HTMLImageElement).parentElement
-                        if (parent) {
-                          parent.innerHTML = `<span class="text-sm font-bold text-muted-foreground">${source.title.charAt(0).toUpperCase()}</span>`
-                        }
-                      }}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
-                      <span className="truncate">{(() => {
-                        try {
-                          return new URL(source.url).hostname.replace('www.', '')
-                        } catch {
-                          return source.title
-                        }
-                      })()}</span>
-                    </div>
-                    <h3 className="font-medium text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2">
-                      {source.title}
-                    </h3>
-                    {source.description && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                        {source.description}
-                      </p>
-                    )}
-                  </div>
-                  <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                </div>
-              </a>
-            ))}
-            
-            {activeSources.length === 0 && (
-              <div className="text-center text-muted-foreground py-8">
-                <Globe className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No sources available</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Overlay when panel is open */}
-      {sourcePanelOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 z-40"
-          onClick={() => setSourcePanelOpen(false)}
-        />
-      )}
+{/* Sources panel removed - sources hidden from user */}
       </>
     )
   }
