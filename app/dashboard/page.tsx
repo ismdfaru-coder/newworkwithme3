@@ -17,6 +17,10 @@ import {
   FileText,
   Code,
   Sparkles,
+  Image as ImageIcon,
+  Search,
+  Lightbulb,
+  BookOpen,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { MarkdownContent } from "@/components/markdown-content"
@@ -88,8 +92,22 @@ export default function DashboardPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [sourcePanelOpen, setSourcePanelOpen] = useState(false)
   const [activeSources, setActiveSources] = useState<Source[]>([])
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false)
+  const [searchMode, setSearchMode] = useState<"none" | "web" | "deep" | "think">("none")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const plusMenuRef = useRef<HTMLDivElement>(null)
+
+  // Close plus menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (plusMenuRef.current && !plusMenuRef.current.contains(event.target as Node)) {
+        setPlusMenuOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
 
 
@@ -104,8 +122,21 @@ export default function DashboardPage() {
   const handleSubmit = async () => {
     if (!inputValue.trim() || isLoading) return
 
-    // Check if this is a new chat (no existing messages) - use Keyplex
+    // Check if this is a new chat (no existing messages)
     const isNewChat = messages.length === 0
+    
+    // Determine if we should use Manus API based on:
+    // 1. Search mode selected (web, deep, think)
+    // 2. Keywords in the message
+    const manusKeywords = ["deep research", "web research", "browse", "search the web", "look up", "find online", "search online"]
+    const hasManusKeyword = manusKeywords.some(keyword => 
+      inputValue.toLowerCase().includes(keyword)
+    )
+    const shouldUseManus = searchMode !== "none" || hasManusKeyword || !isNewChat
+    
+    // Reset search mode after using it
+    const currentMode = searchMode
+    setSearchMode("none")
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -135,8 +166,8 @@ export default function DashboardPage() {
     setIsLoading(true)
 
     try {
-      // For new chat, use Keyplex (faster, synchronous)
-      if (isNewChat) {
+      // Use Keyplex for new chat without special modes/keywords (faster, synchronous)
+      if (isNewChat && !shouldUseManus) {
         setMessages(prev => prev.map(m => 
           m.id === assistantMessage.id 
             ? { 
@@ -197,8 +228,14 @@ export default function DashboardPage() {
         return
       }
 
-      // For existing chats, continue using Manus (with web search capabilities)
-      // Update to processing status
+      // Use Manus API (with web search capabilities)
+      // Update to processing status with appropriate message
+      const statusMessage = currentMode === "deep" 
+        ? "Deep researching..." 
+        : currentMode === "think" 
+          ? "Thinking deeper..."
+          : "Thinking and searching the web..."
+      
       setMessages(prev => prev.map(m => 
         m.id === assistantMessage.id 
           ? { 
@@ -209,7 +246,7 @@ export default function DashboardPage() {
                 {
                   id: crypto.randomUUID(),
                   type: "searching",
-                  description: "Thinking and searching the web...",
+                  description: statusMessage,
                   timestamp: new Date(),
                 }
               ]
@@ -1034,9 +1071,95 @@ export default function DashboardPage() {
 
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
-                <Plus className="h-4 w-4" />
-              </Button>
+              {/* Plus menu with dropdown */}
+              <div className="relative" ref={plusMenuRef}>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
+                  onClick={() => setPlusMenuOpen(!plusMenuOpen)}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+                
+                {/* Dropdown Menu */}
+                {plusMenuOpen && (
+                  <div className="absolute bottom-full left-0 mb-2 w-48 rounded-lg border border-border bg-card shadow-lg py-1 z-50">
+                    <button 
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                      onClick={() => {
+                        setPlusMenuOpen(false)
+                        // TODO: Implement file upload
+                      }}
+                    >
+                      <ImageIcon className="h-4 w-4" />
+                      <span>Add photos</span>
+                    </button>
+                    <button 
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                      onClick={() => {
+                        setSearchMode("web")
+                        setPlusMenuOpen(false)
+                        textareaRef.current?.focus()
+                      }}
+                    >
+                      <Globe className="h-4 w-4" />
+                      <span>Web search</span>
+                      {searchMode === "web" && <Check className="h-3 w-3 ml-auto text-primary" />}
+                    </button>
+                    <button 
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                      onClick={() => {
+                        setPlusMenuOpen(false)
+                        // TODO: Implement study and learn
+                      }}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      <span>Study and learn</span>
+                    </button>
+                    
+                    <div className="border-t border-border my-1" />
+                    
+                    <button 
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                      onClick={() => {
+                        setSearchMode("deep")
+                        setPlusMenuOpen(false)
+                        textareaRef.current?.focus()
+                      }}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      <span>Deep research</span>
+                      {searchMode === "deep" && <Check className="h-3 w-3 ml-auto text-primary" />}
+                    </button>
+                    <button 
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-muted transition-colors text-left"
+                      onClick={() => {
+                        setSearchMode("think")
+                        setPlusMenuOpen(false)
+                        textareaRef.current?.focus()
+                      }}
+                    >
+                      <Lightbulb className="h-4 w-4" />
+                      <span>Think longer</span>
+                      {searchMode === "think" && <Check className="h-3 w-3 ml-auto text-primary" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Show active mode indicator */}
+              {searchMode !== "none" && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs">
+                  {searchMode === "web" && <><Globe className="h-3 w-3" /><span>Web</span></>}
+                  {searchMode === "deep" && <><Sparkles className="h-3 w-3" /><span>Deep</span></>}
+                  {searchMode === "think" && <><Lightbulb className="h-3 w-3" /><span>Think</span></>}
+                  <button onClick={() => setSearchMode("none")} className="ml-1 hover:bg-primary/20 rounded-full p-0.5">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              )}
+              
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground">
                 <HandIcon />
               </Button>
